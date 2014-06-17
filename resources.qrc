@@ -2,4 +2,7 @@
     <qresource prefix="/plugins/Helmert2D" >
         <file>icon.png</file>
     </qresource>
+    <qresource prefix="/plugins/Helmert2D" >
+        <file>icons/helmert2d.png</file>
+    </qresource>    
 </RCC>
