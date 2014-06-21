@@ -23,8 +23,9 @@
 
 import os
 
-from PyQt4 import QtGui, uic
+from PyQt4 import uic
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 
@@ -33,7 +34,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'helmert2d_dialog_control_points.ui'))
 
 
-class Helmert2DDialogControlPoints(QtGui.QDialog, FORM_CLASS):
+class Helmert2DDialogControlPoints(QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(Helmert2DDialogControlPoints, self).__init__(parent)
@@ -45,8 +46,8 @@ class Helmert2DDialogControlPoints(QtGui.QDialog, FORM_CLASS):
         self.setupUi(self)
         
         # Rename OK button and connect to custom accept method.
-        self.okButton = self.buttonBox.button(QtGui.QDialogButtonBox.Ok)
-        self.okButton.setText(QCoreApplication.translate('Helmert2D', "Identify"))
+        self.okButton = self.buttonBox.button(QDialogButtonBox.Ok)
+        self.okButton.setText(self.tr(u"Identify"))
         self.connect(self.okButton, SIGNAL("accepted()"), self.accept)        
         
         # Connect layer comboboxes with the field comboboxes.
@@ -57,7 +58,10 @@ class Helmert2DDialogControlPoints(QtGui.QDialog, FORM_CLASS):
         self.localLayerCombo.layerChanged.connect(self.localLayerChanged)
         self.localLayerCombo.setLayer(self.localLayerCombo.currentLayer()) # Emits signal on initialisation. Why it is necessary?
         
-        
+        self.bar = QgsMessageBar(self)
+        self.bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
+        self.gridLayout.addWidget(self.bar, 0, 0, Qt.AlignTop)  
+
     @pyqtSlot(QgsMapLayer)
     def globalLayerChanged(self, layer):
         print "globalLayerChanged"
@@ -67,6 +71,25 @@ class Helmert2DDialogControlPoints(QtGui.QDialog, FORM_CLASS):
     def localLayerChanged(self, layer):
         print "localLayerChanged"
         self.localFieldCombo.setLayer(layer)
-
+        
     def accept(self):
         print "ACCEPT"
+        
+        if self.globalLayerCombo.currentLayer() in (None, '') or self.localLayerCombo.currentLayer() in (None, ''):
+            self.bar.pushMessage(self.tr(u"Warning"), self.tr(u"Missing global or local layer."), level=QgsMessageBar.WARNING)
+            return
+    
+        if self.globalFieldCombo.currentField() in (None, '') or self.localFieldCombo.currentField() in (None, ''):
+#            self.bar.pushMessage(QCoreApplication.translate('Helmert2D', "Warning"), QCoreApplication.translate('Helmert2D', "Missing global or local identifier attribute."), level=QgsMessageBar.WARNING)
+            QMessageBox.information(None, "Helmert2D", self.tr(u"Missing global or local identifier attribute."))
+            return
+    
+        if self.globalLayerCombo.currentIndex() == self.localLayerCombo.currentIndex():
+            reply = QMessageBox.question(None, "Helmert2D", self.tr(u"Do you want to use the same layer twice?"), QMessageBox.Yes|QMessageBox.No)
+            if reply == QMessageBox.No:
+                return
+            print "gagagagagaga"
+            return   
+        
+    def tr(self, message):
+        return QCoreApplication.translate('Helmert2D', message)
