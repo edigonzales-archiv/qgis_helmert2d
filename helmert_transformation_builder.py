@@ -6,46 +6,46 @@ from qgis.core import *
 
 from numpy import *
 
-class TransformationBuilder(QObject):    
+class HelmertTransformationBuilder(QObject):    
     def __init__(self, control_points):
         QObject.__init__(self)
         
-        self.gcps = control_points
+        self.control_points = control_points
         
-        self.calcScale = True
-        self.calcRotation = True
+        self.calculate_scale = True
+        self.calculate_rotation = True
         
         self.A = None
         self.l = None
         self.x = None
         self.v = None
         
-    def estimateScale(self, flag):
-        self.calcScale = flag
+    def estimate_scale(self, flag):
+        self.calculate_scale = flag
 
-    def estimateRotation(self, flag):
-        self.calcRotation = flag
+    def estimate_rotation(self, flag):
+        self.calculate_rotation = flag
 
     def run(self):
         # 4-Parameter-Loesung wird IMMER gerechnet. Fuer die
         # 2 und 3 Parameter-Loesung dient sie als Naeherungsloesung.
-        for gcp in self.gcps:  
+        for gcp in self.control_points:  
             
-            if gcp.isChecked() == False:
+            if gcp.is_checked() == False:
                 continue
             
-            if self.A == None:
-                self.A = array( [ [1,  0,  float(gcp.getXlocal()),-1*float(gcp.getYlocal())] ] )
-                self.A = append(self.A, [ [0,  1,  float(gcp.getYlocal()), float(gcp.getXlocal())] ], axis=0 )
+            if self.A is None:
+                self.A = array( [ [1,  0,  float(gcp.get_x_local()),-1*float(gcp.get_y_local())] ] )
+                self.A = append(self.A, [ [0,  1,  float(gcp.get_y_local()), float(gcp.get_x_local())] ], axis=0 )
             else:
-                self.A = append(self.A, [ [1,  0,  float(gcp.getXlocal()), -1*float(gcp.getYlocal())] ], axis=0 )
-                self.A = append(self.A, [ [0,  1,  float(gcp.getYlocal()), float(gcp.getXlocal())] ], axis=0 )
+                self.A = append(self.A, [ [1,  0,  float(gcp.get_x_local()), -1*float(gcp.get_y_local())] ], axis=0 )
+                self.A = append(self.A, [ [0,  1,  float(gcp.get_y_local()), float(gcp.get_x_local())] ], axis=0 )
                 
-            if self.l == None:
-                self.l = array( [ [float(gcp.getXglobal())], [float(gcp.getYglobal())] ] )
+            if self.l is None:
+                self.l = array( [ [float(gcp.get_x_global())], [float(gcp.get_y_global())] ] )
             else:
-                self.l = append(self.l, [[float(gcp.getXglobal())]],  axis=0)
-                self.l = append(self.l, [[float(gcp.getYglobal())]],  axis=0)
+                self.l = append(self.l, [[float(gcp.get_x_global())]],  axis=0)
+                self.l = append(self.l, [[float(gcp.get_y_global())]],  axis=0)
         
         self.x = dot( dot( linalg.inv( dot( transpose(self.A),  self.A)),  transpose(self.A) ),  self.l)
         self.v = dot( self.A,  self.x ) - self.l
@@ -76,27 +76,27 @@ class TransformationBuilder(QObject):
         print "a: " + str(a)
         print "b: " + str(b)
         
-        print "Massstab: " + str(self.calcScale)
-        print "Rotation: " + str(self.calcRotation)
+        print "Massstab: " + str(self.calculate_scale)
+        print "Rotation: " + str(self.calculate_rotation)
         
         # 4-Parameter-Loesung, fertig.
-        if self.calcScale == True and self.calcRotation == True:
+        if self.calculate_scale is True and self.calculate_rotation is True:
             print  [a, b, c, d]
             return [a, b, c, d, None, None]
             
         # 2-Parameter-Loesung, nur Translation.
-        if self.calcScale == False and self.calcRotation == False:
+        if self.calculate_scale is False and self.calculate_rotation is False:
             for i in range(0, 1000):
                 print i
                 
                 self.A = None
                 self.l = None
                 
-                for gcp in self.gcps:  
-                    if gcp.isChecked() == False:
+                for gcp in self.control_points:  
+                    if gcp.is_checked() is False:
                         continue
                         
-                    if self.A == None:
+                    if self.A is None:
                         self.A = array( [ [1,  0] ] )
                         self.A = append(self.A, [ [0,  1] ], axis=0 )
                     else:
@@ -104,14 +104,14 @@ class TransformationBuilder(QObject):
                         self.A = append(self.A, [ [0,  1] ], axis=0 )
 
                     # f(tx0,ty0)
-                    f0_x = self.tx_tmp + 1*math.cos(0)*float(gcp.getXlocal()) - 1*math.sin(0)*float(gcp.getYlocal())
-                    f0_y = self.ty_tmp + 1*math.sin(0)*float(gcp.getXlocal()) + 1*math.cos(0)*float(gcp.getYlocal())
+                    f0_x = self.tx_tmp + 1*math.cos(0)*float(gcp.get_x_local()) - 1*math.sin(0)*float(gcp.get_y_local())
+                    f0_y = self.ty_tmp + 1*math.sin(0)*float(gcp.get_x_local()) + 1*math.cos(0)*float(gcp.get_y_local())
 
-                    if self.l == None:
-                        self.l = array( [ [float(gcp.getXglobal()) - f0_x],  [float(gcp.getYglobal()) - f0_y] ] )
+                    if self.l is None:
+                        self.l = array( [ [float(gcp.get_x_global()) - f0_x],  [float(gcp.get_y_global()) - f0_y] ] )
                     else:
-                        self.l = append(self.l,  [[float(gcp.getXglobal()) - f0_x]],  axis=0)
-                        self.l = append(self.l,  [[float(gcp.getYglobal()) - f0_y]],  axis=0)
+                        self.l = append(self.l,  [[float(gcp.get_x_global()) - f0_x]],  axis=0)
+                        self.l = append(self.l,  [[float(gcp.get_y_global()) - f0_y]],  axis=0)
 
                 self.x = dot( dot( linalg.inv( dot( transpose(self.A),  self.A)),  transpose(self.A) ),  self.l)
                 self.v = dot( self.A,  self.x ) - self.l
@@ -123,7 +123,7 @@ class TransformationBuilder(QObject):
                 self.ty_tmp = self.ty_tmp + self.x[1][0]
 
                 if math.fabs(self.tx_diff) < 0.0001 and math.fabs(self.ty_diff) < 0.0001:
-                    a = self.tx_tmp
+                    a = self.tx_tmpisChe
                     b = self.ty_tmp
                     c = 1
                     d = 0
@@ -131,33 +131,33 @@ class TransformationBuilder(QObject):
                     return [a, b, c, d, None, None]
             
         # 3-Parameter-Loesung, Rotation wird nicht geschaetzt.
-        if self.calcScale == True and self.calcRotation == False:
+        if self.calculate_scale is True and self.calculate_rotation is False:
             for i in range(0, 1000):
                 print i
                 
                 self.A = None
                 self.l = None
                 
-                for gcp in self.gcps:  
-                    if gcp.isChecked() == False:
+                for gcp in self.control_points:  
+                    if gcp.is_checked() == False:
                         continue
 
-                    if self.A == None:
-                        self.A = array( [ [1,  0, math.cos(0)*float(gcp.getXlocal()) - math.sin(0)*float(gcp.getYlocal())] ] )
-                        self.A = append(self.A, [ [0,  1, math.sin(0)*float(gcp.getXlocal()) - math.cos(0)*float(gcp.getYlocal())] ], axis=0 )
+                    if self.A is None:
+                        self.A = array( [ [1,  0, math.cos(0)*float(gcp.get_x_local()) - math.sin(0)*float(gcp.get_y_local())] ] )
+                        self.A = append(self.A, [ [0,  1, math.sin(0)*float(gcp.get_x_local()) - math.cos(0)*float(gcp.get_y_local())] ], axis=0 )
                     else:
-                        self.A = append(self.A, [ [1,  0,  math.cos(0)*float(gcp.getXlocal()) - math.sin(0)*float(gcp.getYlocal())] ], axis=0 )
-                        self.A = append(self.A, [ [0,  1,  math.sin(0)*float(gcp.getXlocal()) - math.cos(0)*float(gcp.getYlocal())] ], axis=0 )
+                        self.A = append(self.A, [ [1,  0,  math.cos(0)*float(gcp.get_x_local()) - math.sin(0)*float(gcp.get_y_local())] ], axis=0 )
+                        self.A = append(self.A, [ [0,  1,  math.sin(0)*float(gcp.get_x_local()) - math.cos(0)*float(gcp.get_y_local())] ], axis=0 )
 
                     # f(tx0,ty0,scale0)
-                    f0_x = self.tx_tmp + self.scale_tmp*math.cos(0)*float(gcp.getXlocal()) - self.scale_tmp*math.sin(0)*float(gcp.getYlocal())
-                    f0_y = self.ty_tmp + self.scale_tmp*math.sin(0)*float(gcp.getXlocal()) + self.scale_tmp*math.cos(0)*float(gcp.getYlocal())
+                    f0_x = self.tx_tmp + self.scale_tmp*math.cos(0)*float(gcp.get_x_local()) - self.scale_tmp*math.sin(0)*float(gcp.get_y_local())
+                    f0_y = self.ty_tmp + self.scale_tmp*math.sin(0)*float(gcp.get_x_local()) + self.scale_tmp*math.cos(0)*float(gcp.get_y_local())
 
-                    if self.l == None:
-                        self.l = array( [ [float(gcp.getXglobal()) - f0_x],  [float(gcp.getYglobal()) - f0_y] ] )
+                    if self.l is None:
+                        self.l = array( [ [float(gcp.get_x_global()) - f0_x],  [float(gcp.get_y_global()) - f0_y] ] )
                     else:
-                        self.l = append(self.l,  [[float(gcp.getXglobal()) - f0_x]],  axis=0)
-                        self.l = append(self.l,  [[float(gcp.getYglobal()) - f0_y]],  axis=0)
+                        self.l = append(self.l,  [[float(gcp.get_x_global()) - f0_x]],  axis=0)
+                        self.l = append(self.l,  [[float(gcp.get_y_global()) - f0_y]],  axis=0)
 
                 self.x = dot( dot( linalg.inv( dot( transpose(self.A),  self.A)),  transpose(self.A) ),  self.l)
                 self.v = dot( self.A,  self.x ) - self.l
@@ -179,33 +179,33 @@ class TransformationBuilder(QObject):
                     return [a, b, c, d, None, None]
 
         # 3-Parameter-Loesung, Massstab wird nicht geschaetzt.
-        if self.calcScale == False and self.calcRotation == True:
+        if self.calculate_scale is False and self.calculate_rotation is True:
             for i in range(0, 1000):
                 print i
                 
                 self.A = None
                 self.l = None
                 
-                for gcp in self.gcps:  
-                    if gcp.isChecked() == False:
+                for gcp in self.control_points:  
+                    if gcp.is_checked() == False:
                         continue
 
-                    if self.A == None:
-                        self.A = array( [ [1,  0,  -1*float(gcp.getXlocal())*math.sin(self.alpha_tmp) - 1*float(gcp.getYlocal())*math.cos(self.alpha_tmp)] ] )
-                        self.A = append(self.A, [ [0,  1,  float(gcp.getXlocal())*math.cos(self.alpha_tmp) - 1*float(gcp.getYlocal())*math.sin(self.alpha_tmp)] ], axis=0 )
+                    if self.A is None:
+                        self.A = array( [ [1,  0,  -1*float(gcp.get_x_local())*math.sin(self.alpha_tmp) - 1*float(gcp.get_y_local())*math.cos(self.alpha_tmp)] ] )
+                        self.A = append(self.A, [ [0,  1,  float(gcp.get_x_local())*math.cos(self.alpha_tmp) - 1*float(gcp.get_y_local())*math.sin(self.alpha_tmp)] ], axis=0 )
                     else:
-                        self.A = append(self.A, [ [1,  0,  -1*float(gcp.getXlocal())*math.sin(self.alpha_tmp) - 1*float(gcp.getYlocal())*math.cos(self.alpha_tmp)] ], axis=0 )
-                        self.A = append(self.A, [ [0,  1,  float(gcp.getXlocal())*math.cos(self.alpha_tmp) - 1*float(gcp.getYlocal())*math.sin(self.alpha_tmp)] ], axis=0 )
+                        self.A = append(self.A, [ [1,  0,  -1*float(gcp.get_x_local())*math.sin(self.alpha_tmp) - 1*float(gcp.get_y_local())*math.cos(self.alpha_tmp)] ], axis=0 )
+                        self.A = append(self.A, [ [0,  1,  float(gcp.get_x_local())*math.cos(self.alpha_tmp) - 1*float(gcp.get_y_local())*math.sin(self.alpha_tmp)] ], axis=0 )
 
                     # f(tx0,ty0,alpha0)
-                    f0_x = self.tx_tmp + math.cos(self.alpha_tmp)*float(gcp.getXlocal()) - math.sin(self.alpha_tmp)*float(gcp.getYlocal())
-                    f0_y = self.ty_tmp + math.sin(self.alpha_tmp)*float(gcp.getXlocal()) + math.cos(self.alpha_tmp)*float(gcp.getYlocal())
+                    f0_x = self.tx_tmp + math.cos(self.alpha_tmp)*float(gcp.get_x_local()) - math.sin(self.alpha_tmp)*float(gcp.get_y_local())
+                    f0_y = self.ty_tmp + math.sin(self.alpha_tmp)*float(gcp.get_x_local()) + math.cos(self.alpha_tmp)*float(gcp.get_y_local())
           
-                    if self.l == None:
-                        self.l = array( [ [float(gcp.getXglobal()) - f0_x],  [float(gcp.getYglobal()) - f0_y] ] )
+                    if self.l is None:
+                        self.l = array( [ [float(gcp.get_x_global()) - f0_x],  [float(gcp.get_y_global()) - f0_y] ] )
                     else:
-                        self.l = append(self.l,  [[float(gcp.getXglobal()) - f0_x]],  axis=0)
-                        self.l = append(self.l,  [[float(gcp.getYglobal()) - f0_y]],  axis=0)
+                        self.l = append(self.l,  [[float(gcp.get_x_global()) - f0_x]],  axis=0)
+                        self.l = append(self.l,  [[float(gcp.get_y_global()) - f0_y]],  axis=0)
 
                 self.x = dot( dot( linalg.inv( dot( transpose(self.A),  self.A)),  transpose(self.A) ),  self.l)
                 self.v = dot( self.A,  self.x ) - self.l

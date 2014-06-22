@@ -30,6 +30,7 @@ from qgis.core import *
 from qgis.gui import *
 from helmert2d_dialog_control_points import Helmert2DDialogControlPoints
 from helmert2d_dialog_settings import Helmert2DDialogSettings
+from helmert_transformation_builder import HelmertTransformationBuilder
 from point import Point
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -86,8 +87,8 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                     gcp = Point(global_ident)
                     gcp.set_x_global(global_geom.asPoint().x())
                     gcp.set_y_global(global_geom.asPoint().y())
-                    gcp.set_x_local(global_geom.asPoint().x())
-                    gcp.set_y_local(global_geom.asPoint().y())
+                    gcp.set_x_local(local_geom.asPoint().x())
+                    gcp.set_y_local(local_geom.asPoint().y())
                     
                     control_points.append(gcp)
                     break
@@ -249,6 +250,12 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 QMessageBox.warning( None, "Helmert2D", self.tr("No enough control points for affine transformation." ))
                 return    
 
+        # Calculate transformation parameters.
+        if self.trans_type == 1:
+            builder = HelmertTransformationBuilder(control_points)
+            builder.estimate_scale(self.cbEstimateScale.isChecked())
+            builder.estimate_rotation(self.cbEstimateRotation.isChecked())
+            transformation_parameters = builder.run()
 
 
 
