@@ -35,6 +35,9 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class Helmert2DDialogControlPoints(QDialog, FORM_CLASS):
+    
+    identifyControlPoints = pyqtSignal(QgsMapLayer, QgsMapLayer, str, str)
+    
     def __init__(self, parent=None):
         """Constructor."""
         super(Helmert2DDialogControlPoints, self).__init__(parent)
@@ -53,28 +56,27 @@ class Helmert2DDialogControlPoints(QDialog, FORM_CLASS):
         # Connect layer comboboxes with the field comboboxes.
         # New style PyQt connections syntax!
         self.globalLayerCombo.layerChanged.connect(self.globalLayerChanged)
-        self.globalLayerCombo.setLayer(self.globalLayerCombo.currentLayer()) # Emits signal on initialisation. Why it is necessary?
+        self.globalLayerCombo.setLayer(self.globalLayerCombo.currentLayer()) # Emits signal on initialisation. Why is it necessary?
         
         self.localLayerCombo.layerChanged.connect(self.localLayerChanged)
-        self.localLayerCombo.setLayer(self.localLayerCombo.currentLayer()) # Emits signal on initialisation. Why it is necessary?
+        self.localLayerCombo.setLayer(self.localLayerCombo.currentLayer()) # Emits signal on initialisation. Why is it necessary?
         
         self.bar = QgsMessageBar(self)
         self.bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
         self.gridLayout.addWidget(self.bar, 0, 0, Qt.AlignTop)  
+                
+    def tr(self, message):
+        return QCoreApplication.translate('Helmert2D', message)
 
     @pyqtSlot(QgsMapLayer)
     def globalLayerChanged(self, layer):
-        print "globalLayerChanged"
         self.globalFieldCombo.setLayer(layer)
 
     @pyqtSlot(QgsMapLayer)
     def localLayerChanged(self, layer):
-        print "localLayerChanged"
         self.localFieldCombo.setLayer(layer)
         
     def accept(self):
-        print "ACCEPT"
-        
         if self.globalLayerCombo.currentLayer() in (None, '') or self.localLayerCombo.currentLayer() in (None, ''):
             self.bar.pushMessage(self.tr(u"Warning"), self.tr(u"Missing global or local layer."), level=QgsMessageBar.WARNING)
             return
@@ -88,8 +90,6 @@ class Helmert2DDialogControlPoints(QDialog, FORM_CLASS):
             reply = QMessageBox.question(None, "Helmert2D", self.tr(u"Do you want to use the same layer twice?"), QMessageBox.Yes|QMessageBox.No)
             if reply == QMessageBox.No:
                 return
-            print "gagagagagaga"
-            return   
+
+        self.identifyControlPoints.emit(self.globalLayerCombo.currentLayer(), self.localLayerCombo.currentLayer(), self.globalFieldCombo.currentField(), self.localFieldCombo.currentField())
         
-    def tr(self, message):
-        return QCoreApplication.translate('Helmert2D', message)
