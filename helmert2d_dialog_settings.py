@@ -47,9 +47,15 @@ class Helmert2DDialogSettings(QDialog, FORM_CLASS):
         self.settings = QSettings("CatAIS","Helmert2D")
         self.export_directory = self.settings.value("settings/export_directory")
         self.decimal_places = self.settings.value("settings/decimal_places", 3)
-        
+        self.decimal_places_residuals = self.settings.value("settings/decimal_places_residuals", 1)
+        self.unit_residuals = self.settings.value("settings/unit_residuals", "mm")
+
         self.lineEditExport.setText(self.export_directory)
         self.spinBoxDecimalPlaces.setValue(int(self.decimal_places))
+        self.spinBoxDecimalPlacesResiduals.setValue(int(self.decimal_places_residuals))
+        
+        idx = self.comboBoxUnitResiduals.findText(self.unit_residuals)
+        self.comboBoxUnitResiduals.setCurrentIndex(idx)
         
     def tr(self, message):
         return QCoreApplication.translate('Helmert2D', message)
@@ -61,8 +67,9 @@ class Helmert2DDialogSettings(QDialog, FORM_CLASS):
         self.lineEditExport.setText(dir_info.absoluteFilePath())
         
     def accept(self):
-        print "ACCEPT99999"
         self.settings.setValue("settings/export_directory", self.lineEditExport.text())
         self.settings.setValue("settings/decimal_places", self.spinBoxDecimalPlaces.value())
+        self.settings.setValue("settings/decimal_places_residuals", self.spinBoxDecimalPlacesResiduals.value())
+        self.settings.setValue("settings/unit_residuals", self.comboBoxUnitResiduals.currentText())
         self.close()
         

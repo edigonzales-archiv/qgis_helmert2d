@@ -71,23 +71,23 @@ class HelmertTransformationBuilder(QObject):
         self.tx_tmp = a
         self.ty_tmp = b
         
-        print "scale: " + str(m)
-        print "rotation: " + str(alpha)
-        print "a: " + str(a)
-        print "b: " + str(b)
-        
-        print "Massstab: " + str(self.calculate_scale)
-        print "Rotation: " + str(self.calculate_rotation)
+#        print "scale: " + str(m)
+#        print "rotation: " + str(alpha)
+#        print "a: " + str(a)
+#        print "b: " + str(b)
+#        
+#        print "Massstab: " + str(self.calculate_scale)
+#        print "Rotation: " + str(self.calculate_rotation)
         
         # 4-Parameter-Loesung, fertig.
         if self.calculate_scale is True and self.calculate_rotation is True:
-            print  [a, b, c, d]
+#            print  [a, b, c, d]
             return [a, b, c, d, None, None]
             
         # 2-Parameter-Loesung, nur Translation.
         if self.calculate_scale is False and self.calculate_rotation is False:
             for i in range(0, 1000):
-                print i
+#                print i
                 
                 self.A = None
                 self.l = None
@@ -127,13 +127,13 @@ class HelmertTransformationBuilder(QObject):
                     b = self.ty_tmp
                     c = 1
                     d = 0
-                    print  [a, b, c, d]
+#                    print  [a, b, c, d]
                     return [a, b, c, d, None, None]
             
         # 3-Parameter-Loesung, Rotation wird nicht geschaetzt.
         if self.calculate_scale is True and self.calculate_rotation is False:
             for i in range(0, 1000):
-                print i
+#                print i
                 
                 self.A = None
                 self.l = None
@@ -181,7 +181,7 @@ class HelmertTransformationBuilder(QObject):
         # 3-Parameter-Loesung, Massstab wird nicht geschaetzt.
         if self.calculate_scale is False and self.calculate_rotation is True:
             for i in range(0, 1000):
-                print i
+#                print i
                 
                 self.A = None
                 self.l = None
@@ -223,7 +223,7 @@ class HelmertTransformationBuilder(QObject):
                     b = self.ty_tmp
                     c = math.cos(self.alpha_tmp)
                     d = math.sin(self.alpha_tmp)
-                    print  [a, b, c, d]
+#                    print  [a, b, c, d]
                     return [a, b, c, d, None, None]
                     
             # Not able to find a solution.    
