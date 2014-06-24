@@ -49,6 +49,12 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
         self.settings = QSettings("CatAIS","Helmert2D")
         
     def initGui(self):
+        self.toolBtnIdentify.setIcon(QIcon(':/plugins/Helmert2D/icons/control_points.svg'))
+        self.toolButtonMatch.setIcon(QIcon(':/plugins/Helmert2D/icons/match_control_points_by_locaction.svg'))
+        self.toolBtnSettings.setIcon(QIcon(':/plugins/Helmert2D/icons/mActionOptions.svg'))
+        
+        
+        
         self.init_table_widget()
         self.init_transformation_tab()
         
