@@ -3,7 +3,7 @@
  <class>Helmert2DDialogBase</class>
  <widget class="QDialog" name="Helmert2DDialogBase">
   <property name="windowModality">
-   <enum>Qt::ApplicationModal</enum>
+   <enum>Qt::NonModal</enum>
   </property>
   <property name="geometry">
    <rect>

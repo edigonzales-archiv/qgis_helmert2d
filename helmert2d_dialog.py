@@ -41,10 +41,11 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class Helmert2DDialog(QDialog, FORM_CLASS):
-    def __init__(self, parent=None):
+    def __init__(self, iface, parent=None):
         """Constructor."""
         super(Helmert2DDialog, self).__init__(parent)
         self.setupUi(self)
+        self.iface = iface
 
         self.settings = QSettings("CatAIS","Helmert2D")
         
@@ -53,11 +54,11 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
         self.toolButtonMatch.setIcon(QIcon(':/plugins/Helmert2D/icons/match_control_points_by_locaction.svg'))
         self.toolBtnSettings.setIcon(QIcon(':/plugins/Helmert2D/icons/mActionOptions.svg'))
         
-        
-        
         self.init_table_widget()
         self.init_transformation_tab()
         
+        self.vl = None
+    
     def tr(self, message):
         return QCoreApplication.translate('Helmert2D', message)
 
@@ -383,16 +384,16 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 i += 1
 
             # Update transformation parameters in GUI.
-            a = str("%.12f") % transformation_parameters[0]
-            b = str("%.12f") % transformation_parameters[1]
-            c = str("%.12f") % transformation_parameters[2]
-            d = str("%.12f") % transformation_parameters[3]
+            a = str("%.16f") % transformation_parameters[0]
+            b = str("%.16f") % transformation_parameters[1]
+            c = str("%.16f") % transformation_parameters[2]
+            d = str("%.16f") % transformation_parameters[3]
             if transformation_parameters[4]:
-                e= str("%.12f") % transformation_parameters[4]
+                e= str("%.16f") % transformation_parameters[4]
             else:
                 e = None
             if transformation_parameters[5]:
-                f = str("%.12f") % transformation_parameters[d]
+                f = str("%.16f") % transformation_parameters[d]
             else:
                 f = None
 
@@ -440,7 +441,65 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 self.lineEditParameterM0.setText(m0)
                 self.lineEditParameterMPoint.setText(mpnt)
                 
-        except:
+            # Add/update vector field layer to map canvas.
+            if self.cbAddVectorField.isChecked():
+
+                if self.cbOverwriteVectorField.isChecked():
+                    if self.vl:                        
+                        QgsMapLayerRegistry.instance().removeMapLayer(self.vl.id())
+                
+                crs = self.iface.mapCanvas().mapSettings().destinationCrs().authid()
+                fields = "&field=identifier:string(200)"
+                fields += "&field=control_point:string(10)"
+                fields += "&field=x_local:double" 
+                fields += "&field=y_local:double" 
+                fields += "&field=x_global:double" 
+                fields += "&field=y_global:double" 
+                fields += "&field=x_trans:double" 
+                fields += "&field=y_trans:double" 
+                fields += "&field=vx:double" 
+                fields += "&field=vy:double" 
+                
+                self.vl = QgsVectorLayer("Point?crs=" + crs + fields+ "&index=yes", self.tr("Residuals"), "memory")
+                if not self.vl.isValid(): 
+                    self.iface.messageBar().pushMessage(self.tr("Error"), self.tf("Could not create residuals layer."), level=QgsMessageBar.CRITICAL)
+                
+                pr = self.vl.dataProvider()
+
+                features = []                
+                for cp in transformed_control_points:
+                    if cp.is_checked():
+                        control_point = "true"
+                    else:
+                        control_point = "false"
+                    f = QgsFeature()
+                    f.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(cp.get_x_global()), float(cp.get_y_global()))))
+                    f.setAttributes([cp.get_ident(), control_point, float(cp.get_x_local()), float(cp.get_y_local()), float(cp.get_x_global()), float(cp.get_y_global()), float(cp.get_x_trans()), float(cp.get_y_trans()), (float(cp.get_x_trans()) - float(cp.get_x_global()))*1000, (float(cp.get_y_trans()) - float(cp.get_y_global()))*1000])
+                    features.append(f)
+                    
+                pr.addFeatures(features)
+                self.vl.updateExtents()
+                
+#                properties = {'color': '255,0,0,255','angle_units': '0', 'scale': '1', 'offset_unit': 'MM', 'distance_unit': 'MM', 'size_unit': 'MM', 'size_map_unit_scale': '0,0', 'y_attribute': 'vy', 'distance_map_unit_scale': '0,0', 'offset': '0,0', 'offset_map_unit_scale': '0,0', 'vector_field_type': '0', 'angle_orientation': '0', 'x_attribute': 'vx', 'size': '0'}
+                symbol_layer = QgsVectorFieldSymbolLayer()
+                symbol_layer.setScale(1)
+                symbol_layer.setXAttribute('vx')
+                symbol_layer.setYAttribute('vy')
+                symbol_layer.setVectorFieldType(0)
+                
+                sub_symbol_layer = symbol_layer.subSymbol()
+                sub_symbol_layer.setWidth(0.4)
+                sub_symbol_layer.setColor(QColor(255,0,0,255))
+                
+                self.vl.rendererV2().symbols()[0].changeSymbolLayer(0, symbol_layer)
+                
+                QgsMapLayerRegistry.instance().addMapLayer(self.vl, True)
+                root = QgsProject.instance().layerTreeRoot()
+                layer_tree_layer = root.findLayer(self.vl.id())
+                layer_tree_layer.setVisible(Qt.Checked)
+                
+        except Exception, e:
+            print str(e)
             QApplication.restoreOverrideCursor()
         QApplication.restoreOverrideCursor()
         

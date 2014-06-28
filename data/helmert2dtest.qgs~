@@ -1,5 +1,5 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis projectname="" version="2.3.0-Master">
+<qgis projectname="" version="2.5.0-Master">
     <title></title>
     <layer-tree-group expanded="1" checked="Qt::Checked" name="">
         <customproperties/>
@@ -14,10 +14,10 @@
     <mapcanvas>
         <units>meters</units>
         <extent>
-            <xmin>583726.49494784069247544</xmin>
-            <ymin>239809.46199887045077048</ymin>
-            <xmax>609047.89827961265109479</xmax>
-            <ymax>265071.28555809718091041</ymax>
+            <xmin>584262.71290074870921671</xmin>
+            <ymin>238022.06882251004572026</ymin>
+            <xmax>609584.11623252090066671</xmax>
+            <ymax>263283.89238173689227551</ymax>
         </extent>
         <projections>0</projections>
         <destinationsrs>
@@ -131,14 +131,14 @@
                 <selectedonly on=""/>
             </labelattributes>
             <edittypes>
-                <edittype labelontop="0" editable="0" widgetv2type="TextEdit" name="nr">
-                    <widgetv2config IsMultiline="0" UseHtml="0"/>
+                <edittype labelontop="0" editable="1" widgetv2type="TextEdit" name="nr">
+                    <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
                 </edittype>
-                <edittype labelontop="0" editable="0" widgetv2type="TextEdit" name="x">
-                    <widgetv2config IsMultiline="0" UseHtml="0"/>
+                <edittype labelontop="0" editable="1" widgetv2type="TextEdit" name="x">
+                    <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
                 </edittype>
-                <edittype labelontop="0" editable="0" widgetv2type="TextEdit" name="y">
-                    <widgetv2config IsMultiline="0" UseHtml="0"/>
+                <edittype labelontop="0" editable="1" widgetv2type="TextEdit" name="y">
+                    <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
                 </edittype>
             </edittypes>
             <editform>.</editform>
@@ -228,14 +228,14 @@
                 <selectedonly on=""/>
             </labelattributes>
             <edittypes>
-                <edittype labelontop="0" editable="0" widgetv2type="TextEdit" name="nr">
-                    <widgetv2config IsMultiline="0" UseHtml="0"/>
+                <edittype labelontop="0" editable="1" widgetv2type="TextEdit" name="nr">
+                    <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
                 </edittype>
-                <edittype labelontop="0" editable="0" widgetv2type="TextEdit" name="x">
-                    <widgetv2config IsMultiline="0" UseHtml="0"/>
+                <edittype labelontop="0" editable="1" widgetv2type="TextEdit" name="x">
+                    <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
                 </edittype>
-                <edittype labelontop="0" editable="0" widgetv2type="TextEdit" name="y">
-                    <widgetv2config IsMultiline="0" UseHtml="0"/>
+                <edittype labelontop="0" editable="1" widgetv2type="TextEdit" name="y">
+                    <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
                 </edittype>
             </edittypes>
             <editform>.</editform>
@@ -276,6 +276,29 @@
         <MapCanvas>
             <Units type="QString">meters</Units>
         </MapCanvas>
+        <Digitizing>
+            <LayerSnappingList type="QStringList">
+                <value>kleinluetzel_global20110831193219045</value>
+                <value>kleinluetzel_lokal20110831193218971</value>
+            </LayerSnappingList>
+            <LayerSnappingEnabledList type="QStringList">
+                <value>disabled</value>
+                <value>disabled</value>
+            </LayerSnappingEnabledList>
+            <AvoidIntersectionsList type="QStringList"/>
+            <LayerSnappingToleranceUnitList type="QStringList">
+                <value>1</value>
+                <value>1</value>
+            </LayerSnappingToleranceUnitList>
+            <LayerSnapToList type="QStringList">
+                <value>to_vertex_and_segment</value>
+                <value>to_vertex_and_segment</value>
+            </LayerSnapToList>
+            <LayerSnappingToleranceList type="QStringList">
+                <value>20.000000</value>
+                <value>20.000000</value>
+            </LayerSnappingToleranceList>
+        </Digitizing>
         <PositionPrecision>
             <DecimalPlaces type="int">2</DecimalPlaces>
             <Automatic type="bool">true</Automatic>

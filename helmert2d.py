@@ -59,7 +59,7 @@ class Helmert2D:
                 QCoreApplication.installTranslator(self.translator)
 
         # Create the dialog (after translation) and keep reference
-        self.dlg = Helmert2DDialog()
+        self.dlg = Helmert2DDialog(self.iface)
 
         # Declare instance attributes
         self.actions = []
