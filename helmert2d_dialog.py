@@ -480,7 +480,6 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 pr.addFeatures(features)
                 self.vl.updateExtents()
                 
-#                properties = {'color': '255,0,0,255','angle_units': '0', 'scale': '1', 'offset_unit': 'MM', 'distance_unit': 'MM', 'size_unit': 'MM', 'size_map_unit_scale': '0,0', 'y_attribute': 'vy', 'distance_map_unit_scale': '0,0', 'offset': '0,0', 'offset_map_unit_scale': '0,0', 'vector_field_type': '0', 'angle_orientation': '0', 'x_attribute': 'vx', 'size': '0'}
                 symbol_layer = QgsVectorFieldSymbolLayer()
                 symbol_layer.setScale(1)
                 symbol_layer.setXAttribute('vx')
@@ -491,7 +490,12 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 sub_symbol_layer.setWidth(0.4)
                 sub_symbol_layer.setColor(QColor(255,0,0,255))
                 
-                self.vl.rendererV2().symbols()[0].changeSymbolLayer(0, symbol_layer)
+#                self.vl.rendererV2().symbols()[0].changeSymbolLayer(0, symbol_layer)
+
+                rules = {('Used Control Point',  '"control_point = \'true\'"'),  ('Not Used Control Point',  '"control_point = \'false\'"')}
+                symbol = QgsSymbolV2.defaultSymbol(self.vl.geometryType())
+                renderer = QgsRuleBasedRendererV2(symbol)
+                
                 
                 QgsMapLayerRegistry.instance().addMapLayer(self.vl, True)
                 root = QgsProject.instance().layerTreeRoot()
