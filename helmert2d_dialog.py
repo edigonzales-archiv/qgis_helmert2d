@@ -46,12 +46,19 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
         super(Helmert2DDialog, self).__init__(parent)
         self.setupUi(self)
         self.iface = iface
-
+        
+        # Rename Apply button and connect to custom accept method.        
+        self.applyButton = self.buttonBox.button(QDialogButtonBox.Apply)
+        self.applyButton.setText(self.tr(u"Transform"))
+        self.connect(self.applyButton, SIGNAL("clicked()"), self.estimate_parameters)        
+        
         self.settings = QSettings("CatAIS","Helmert2D")
         
     def initGui(self):
         self.toolBtnIdentify.setIcon(QIcon(':/plugins/Helmert2D/icons/control_points.svg'))
         self.toolButtonMatch.setIcon(QIcon(':/plugins/Helmert2D/icons/match_control_points_by_locaction.svg'))
+        self.toolButtonEnlarge.setIcon(QIcon(':/plugins/Helmert2D/icons/residuals_enlarge.svg'))
+        self.toolButtonReduce.setIcon(QIcon(':/plugins/Helmert2D/icons/residuals_reduce.svg'))
         self.toolBtnSettings.setIcon(QIcon(':/plugins/Helmert2D/icons/mActionOptions.svg'))
         
         self.init_table_widget()
@@ -62,20 +69,28 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
     def tr(self, message):
         return QCoreApplication.translate('Helmert2D', message)
 
-    @pyqtSignature("on_transformBtn_clicked()")    
-    def on_transformBtn_clicked(self):
-        self.estimate_parameters()        
-
-    @pyqtSignature("on_toolBtnSettings_clicked()")    
-    def on_toolBtnSettings_clicked(self):
-        self.dlg = Helmert2DDialogSettings()
-        self.dlg.show()
-        
     @pyqtSignature("on_toolBtnIdentify_clicked()")    
     def on_toolBtnIdentify_clicked(self):
         self.dlg = Helmert2DDialogControlPoints()
         self.dlg.show()
         self.dlg.identifyControlPoints.connect(self.identify_control_points)
+
+    @pyqtSignature("on_toolButtonEnlarge_clicked()")    
+    def on_toolButtonEnlarge_clicked(self):
+        self.change_residual_scale("enlarge")
+
+    @pyqtSignature("on_toolButtonReduce_clicked()")    
+    def on_toolButtonReduce_clicked(self):
+        self.change_residual_scale("reduce")
+
+    @pyqtSignature("on_toolBtnSettings_clicked()")    
+    def on_toolBtnSettings_clicked(self):
+        self.dlg = Helmert2DDialogSettings()
+        self.dlg.show()
+
+    @pyqtSignature("on_transformBtn_clicked()")    
+    def on_transformBtn_clicked(self):
+        self.estimate_parameters()        
 
     @pyqtSlot(QgsMapLayer, QgsMapLayer, str, str)
     def identify_control_points(self, global_layer, local_layer, global_field, local_field):
@@ -221,7 +236,72 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
             self.lineEditParameterX0.setEnabled(False)
             self.lineEditParameterRotation.setEnabled(False)
             self.lineEditParameterScale.setEnabled(False)
+
+    def change_residual_scale(self, type):
+        if self.vl:
+            symbol_layer = self.vl.rendererV2().symbols()[0].symbolLayer(0) # There are two rules -> two VectorFieldRenderer but with the same scale.
+            properties = symbol_layer.properties()
+            scale = float(properties['scale'])
+            if type == "enlarge":
+                new_scale = scale * 2
+            elif type == "reduce":
+                new_scale = scale / 2
+
+            self.update_residuals_symbology(new_scale)
+            
+            title = self.tr("Residuals (")
+            if new_scale < 1:
+                title += str("1:%.0f") % float(1/new_scale)
+            else:
+                title += str("%.0f:1") % new_scale
+            title += ")"
+            self.vl.setTitle(title) # does not work?! no update?!
+            
+            # Workaround?
+            root = QgsProject.instance().layerTreeRoot()
+            layer_tree_layer = root.findLayer(self.vl.id())
+            layer_tree_layer.setLayerName(title)
         
+    def update_residuals_symbology(self, scale):
+            symbol_layer_used = QgsVectorFieldSymbolLayer()
+            symbol_layer_used.setScale(scale)
+            symbol_layer_used.setXAttribute('vx')
+            symbol_layer_used.setYAttribute('vy')
+            symbol_layer_used.setVectorFieldType(0)
+            
+            sub_symbol_layer_used = symbol_layer_used.subSymbol()
+            sub_symbol_layer_used.setWidth(0.4)
+            sub_symbol_layer_used.setColor(QColor(255,0,0,255))
+            
+            symbol_layer_not = QgsVectorFieldSymbolLayer()
+            symbol_layer_not.setScale(scale)
+            symbol_layer_not.setXAttribute('vx')
+            symbol_layer_not.setYAttribute('vy')
+            symbol_layer_not.setVectorFieldType(0)
+            
+            sub_symbol_layer_not = symbol_layer_not.subSymbol()
+            sub_symbol_layer_not.setWidth(0.4)
+            sub_symbol_layer_not.setAlpha(0.2)
+            sub_symbol_layer_not.setColor(QColor(255,0,0,255))
+            
+            rules = {('Used',  '"control_point" = \'true\'', symbol_layer_used),  ('Not Used',  '"control_point" = \'false\'', symbol_layer_not)}
+            symbol = QgsSymbolV2.defaultSymbol(self.vl.geometryType())
+            renderer = QgsRuleBasedRendererV2(symbol)
+            
+            root_rule = renderer.rootRule()
+            
+            for label, expression, symbol_layer in rules:
+                rule = root_rule.children()[0].clone()
+                rule.setLabel(label)
+                rule.setFilterExpression(expression)
+                rule.symbol().changeSymbolLayer(0, symbol_layer)
+                root_rule.appendChild(rule)
+                
+            root_rule.removeChildAt(0)
+
+            self.vl.setRendererV2(renderer)
+            self.iface.mapCanvas().refresh()   
+
     def estimate_parameters(self):
         if self.tableWidget.rowCount() == 0:
             QMessageBox.information(None, "Helmert2D", self.tr(u"No control points found."))
@@ -460,7 +540,8 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 fields += "&field=vx:double" 
                 fields += "&field=vy:double" 
                 
-                self.vl = QgsVectorLayer("Point?crs=" + crs + fields+ "&index=yes", self.tr("Residuals"), "memory")
+                layer_title = self.tr("Residuals (1:1)")
+                self.vl = QgsVectorLayer("Point?crs=" + crs + fields+ "&index=yes", layer_title, "memory")
                 if not self.vl.isValid(): 
                     self.iface.messageBar().pushMessage(self.tr("Error"), self.tf("Could not create residuals layer."), level=QgsMessageBar.CRITICAL)
                 
@@ -480,43 +561,9 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 pr.addFeatures(features)
                 self.vl.updateExtents()
                 
-                symbol_layer_used = QgsVectorFieldSymbolLayer()
-                symbol_layer_used.setScale(1)
-                symbol_layer_used.setXAttribute('vx')
-                symbol_layer_used.setYAttribute('vy')
-                symbol_layer_used.setVectorFieldType(0)
+                # Symbology and lables
+                self.update_residuals_symbology(1)
                 
-                sub_symbol_layer_used = symbol_layer_used.subSymbol()
-                sub_symbol_layer_used.setWidth(0.4)
-                sub_symbol_layer_used.setColor(QColor(255,0,0,255))
-                
-                symbol_layer_not = QgsVectorFieldSymbolLayer()
-                symbol_layer_not.setScale(1)
-                symbol_layer_not.setXAttribute('vx')
-                symbol_layer_not.setYAttribute('vy')
-                symbol_layer_not.setVectorFieldType(0)
-                
-                sub_symbol_layer_not = symbol_layer_not.subSymbol()
-                sub_symbol_layer_not.setWidth(0.4)
-                sub_symbol_layer_not.setAlpha(0.2)
-                sub_symbol_layer_not.setColor(QColor(255,0,0,255))
-                
-                rules = {('Used',  '"control_point" = \'true\'', symbol_layer_used),  ('Not Used',  '"control_point" = \'false\'', symbol_layer_not)}
-                symbol = QgsSymbolV2.defaultSymbol(self.vl.geometryType())
-                renderer = QgsRuleBasedRendererV2(symbol)
-                
-                root_rule = renderer.rootRule()
-                
-                for label, expression, symbol_layer in rules:
-                    rule = root_rule.children()[0].clone()
-                    rule.setLabel(label)
-                    rule.setFilterExpression(expression)
-                    rule.symbol().changeSymbolLayer(0, symbol_layer)
-                    root_rule.appendChild(rule)
-                    
-                root_rule.removeChildAt(0)
-                
-                self.vl.setRendererV2(renderer)
                 self.vl.setCustomProperty("labeling", "pal")
                 self.vl.setCustomProperty("labeling/enabled", "true")
                 self.vl.setCustomProperty("labeling/fontItalic", "false")
@@ -532,9 +579,10 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 self.vl.setCustomProperty("labeling/textColorR", "255")
                 self.vl.setCustomProperty("labeling/dist", "1")
 
-
-                QgsMapLayerRegistry.instance().addMapLayer(self.vl, True)
+                QgsMapLayerRegistry.instance().addMapLayer(self.vl, False)
                 root = QgsProject.instance().layerTreeRoot()
+                vln = QgsLayerTreeLayer(self.vl)
+                root.insertChildNode(0, vln)                
                 layer_tree_layer = root.findLayer(self.vl.id())
                 layer_tree_layer.setVisible(Qt.Checked)
                 

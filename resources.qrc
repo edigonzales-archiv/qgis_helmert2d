@@ -14,4 +14,10 @@
     <qresource prefix="/plugins/Helmert2D" >
         <file>icons/match_control_points_by_locaction.svg</file>
     </qresource>    
+    <qresource prefix="/plugins/Helmert2D" >
+        <file>icons/residuals_enlarge.svg</file>
+    </qresource>    
+    <qresource prefix="/plugins/Helmert2D" >
+        <file>icons/residuals_reduce.svg</file>
+    </qresource>    
 </RCC>

@@ -123,7 +123,7 @@ class HelmertTransformationBuilder(QObject):
                 self.ty_tmp = self.ty_tmp + self.x[1][0]
 
                 if math.fabs(self.tx_diff) < 0.0001 and math.fabs(self.ty_diff) < 0.0001:
-                    a = self.tx_tmpisChe
+                    a = self.tx_tmp
                     b = self.ty_tmp
                     c = 1
                     d = 0
