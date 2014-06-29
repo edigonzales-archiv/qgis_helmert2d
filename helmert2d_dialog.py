@@ -480,23 +480,59 @@ class Helmert2DDialog(QDialog, FORM_CLASS):
                 pr.addFeatures(features)
                 self.vl.updateExtents()
                 
-                symbol_layer = QgsVectorFieldSymbolLayer()
-                symbol_layer.setScale(1)
-                symbol_layer.setXAttribute('vx')
-                symbol_layer.setYAttribute('vy')
-                symbol_layer.setVectorFieldType(0)
+                symbol_layer_used = QgsVectorFieldSymbolLayer()
+                symbol_layer_used.setScale(1)
+                symbol_layer_used.setXAttribute('vx')
+                symbol_layer_used.setYAttribute('vy')
+                symbol_layer_used.setVectorFieldType(0)
                 
-                sub_symbol_layer = symbol_layer.subSymbol()
-                sub_symbol_layer.setWidth(0.4)
-                sub_symbol_layer.setColor(QColor(255,0,0,255))
+                sub_symbol_layer_used = symbol_layer_used.subSymbol()
+                sub_symbol_layer_used.setWidth(0.4)
+                sub_symbol_layer_used.setColor(QColor(255,0,0,255))
                 
-#                self.vl.rendererV2().symbols()[0].changeSymbolLayer(0, symbol_layer)
-
-                rules = {('Used Control Point',  '"control_point = \'true\'"'),  ('Not Used Control Point',  '"control_point = \'false\'"')}
+                symbol_layer_not = QgsVectorFieldSymbolLayer()
+                symbol_layer_not.setScale(1)
+                symbol_layer_not.setXAttribute('vx')
+                symbol_layer_not.setYAttribute('vy')
+                symbol_layer_not.setVectorFieldType(0)
+                
+                sub_symbol_layer_not = symbol_layer_not.subSymbol()
+                sub_symbol_layer_not.setWidth(0.4)
+                sub_symbol_layer_not.setAlpha(0.2)
+                sub_symbol_layer_not.setColor(QColor(255,0,0,255))
+                
+                rules = {('Used',  '"control_point" = \'true\'', symbol_layer_used),  ('Not Used',  '"control_point" = \'false\'', symbol_layer_not)}
                 symbol = QgsSymbolV2.defaultSymbol(self.vl.geometryType())
                 renderer = QgsRuleBasedRendererV2(symbol)
                 
+                root_rule = renderer.rootRule()
                 
+                for label, expression, symbol_layer in rules:
+                    rule = root_rule.children()[0].clone()
+                    rule.setLabel(label)
+                    rule.setFilterExpression(expression)
+                    rule.symbol().changeSymbolLayer(0, symbol_layer)
+                    root_rule.appendChild(rule)
+                    
+                root_rule.removeChildAt(0)
+                
+                self.vl.setRendererV2(renderer)
+                self.vl.setCustomProperty("labeling", "pal")
+                self.vl.setCustomProperty("labeling/enabled", "true")
+                self.vl.setCustomProperty("labeling/fontItalic", "false")
+                self.vl.setCustomProperty("labeling/fontBold", "false")
+                self.vl.setCustomProperty("labeling/fontSize", "10")
+                self.vl.setCustomProperty("labeling/fieldName", "round(sqrt(\"vx\"*\"vx\" + \"vy\"*\"vy\")) || 'mm'")
+                self.vl.setCustomProperty("labeling/placement", "0")    
+                self.vl.setCustomProperty("labeling/isExpression", "true")
+                self.vl.setCustomProperty("labeling/bufferSize", "1")
+                self.vl.setCustomProperty("labeling/textColorA", "255")
+                self.vl.setCustomProperty("labeling/textColorB", "0")
+                self.vl.setCustomProperty("labeling/textColorG", "0")
+                self.vl.setCustomProperty("labeling/textColorR", "255")
+                self.vl.setCustomProperty("labeling/dist", "1")
+
+
                 QgsMapLayerRegistry.instance().addMapLayer(self.vl, True)
                 root = QgsProject.instance().layerTreeRoot()
                 layer_tree_layer = root.findLayer(self.vl.id())
