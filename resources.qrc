@@ -1,23 +1,23 @@
 <RCC>
-    <qresource prefix="/plugins/Helmert2D" >
+    <qresource prefix="/plugins/helmert2d" >
         <file>icon.png</file>
     </qresource>
-    <qresource prefix="/plugins/Helmert2D" >
+    <qresource prefix="/plugins/helmert2d" >
         <file>icons/helmert2d.png</file>
     </qresource>    
-    <qresource prefix="/plugins/Helmert2D" >
+    <qresource prefix="/plugins/helmert2d" >
         <file>icons/control_points.svg</file>
     </qresource>    
-    <qresource prefix="/plugins/Helmert2D" >
+    <qresource prefix="/plugins/helmert2d" >
         <file>icons/mActionOptions.svg</file>
     </qresource>    
-    <qresource prefix="/plugins/Helmert2D" >
+    <qresource prefix="/plugins/helmert2d" >
         <file>icons/match_control_points_by_locaction.svg</file>
     </qresource>    
-    <qresource prefix="/plugins/Helmert2D" >
+    <qresource prefix="/plugins/helmert2d" >
         <file>icons/residuals_enlarge.svg</file>
     </qresource>    
-    <qresource prefix="/plugins/Helmert2D" >
+    <qresource prefix="/plugins/helmert2d" >
         <file>icons/residuals_reduce.svg</file>
     </qresource>    
 </RCC>

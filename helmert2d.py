@@ -20,36 +20,34 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon
-# Initialize Qt resources from file resources.py
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from maindialog import MainDialog
+
 import resources_rc
-# Import the code for the dialog
-from helmert2d_dialog import Helmert2DDialog
 import os.path
 
+try:
+    _encoding = QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QApplication.translate(context, text, disambig)
 
 class Helmert2D:
-    """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
-        """Constructor.
-
-        :param iface: An interface instance that will be passed to this class
-            which provides the hook by which you can manipulate the QGIS
-            application at run time.
-        :type iface: QgsInterface
-        """
-        # Save reference to the QGIS interface
         self.iface = iface
-        # initialize plugin directory
+ 
         self.plugin_dir = os.path.dirname(__file__)
-        # initialize locale
+
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'Helmert2D_{}.qm'.format(locale))
+            'helmert2d_{}.qm'.format(locale))
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
@@ -59,7 +57,7 @@ class Helmert2D:
                 QCoreApplication.installTranslator(self.translator)
 
         # Create the dialog (after translation) and keep reference
-        self.dlg = Helmert2DDialog(self.iface)
+        self.dlg = MainDialog(self.iface)
 
         # Declare instance attributes
         self.actions = []
@@ -160,7 +158,7 @@ class Helmert2D:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/Helmert2D/icons/helmert2d.png'
+        icon_path = ':/plugins/helmert2d/icons/helmert2d.png'
         self.add_action(
             icon_path,
             text=self.tr(u'TextForMenuItem'),
