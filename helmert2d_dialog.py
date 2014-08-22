@@ -42,7 +42,6 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class Helmert2DDialog(QDialog, FORM_CLASS):
     def __init__(self, iface, parent=None):
-        """Constructor."""
         super(Helmert2DDialog, self).__init__(parent)
         self.setupUi(self)
         self.iface = iface

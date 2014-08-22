@@ -6,7 +6,7 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 
-from controlpointtable import ControlPointTable
+from controlpointstable import ControlPointsTable
 from identifycontrolpointsdialog import IdentifyControlPointsDialog
 from helmert2d_dialog_settings import Helmert2DDialogSettings
 from helmert_transformation_builder import HelmertTransformationBuilder
@@ -16,6 +16,7 @@ from point import Point
 
 import os
 import math
+import traceback
 
 try:
     _encoding = QApplication.UnicodeUTF8
@@ -47,7 +48,7 @@ class MainDialog(QDialog, FORM_CLASS):
         self.toolButtonReduce.setIcon(QIcon(':/plugins/helmert2d/icons/residuals_reduce.svg'))
         self.toolBtnSettings.setIcon(QIcon(':/plugins/helmert2d/icons/mActionOptions.svg'))
         
-        self.tableWidget = ControlPointTable(self.tabControlPoints)
+        self.tableWidget = ControlPointsTable(self.tabControlPoints)
         self.tableWidget.setObjectName("tableWidget")
         self.tableWidget.setColumnCount(0)
         self.tableWidget.setRowCount(0)
@@ -68,7 +69,7 @@ class MainDialog(QDialog, FORM_CLASS):
     def on_toolBtnIdentify_clicked(self):
         self.dlg = IdentifyControlPointsDialog()
         self.dlg.show()
-        self.dlg.controlPointsIdentified.connect(self.insertControlPoints)
+        self.dlg.controlPointsLayerChosen.connect(self.identifyControlPoints)
 
     @pyqtSignature("on_toolButtonEnlarge_clicked()")    
     def on_toolButtonEnlarge_clicked(self):
@@ -87,8 +88,7 @@ class MainDialog(QDialog, FORM_CLASS):
     def on_transformBtn_clicked(self):
         self.estimate_parameters()        
 
-    @pyqtSlot(QgsMapLayer, QgsMapLayer, str, str)
-    def insertControlPoints(self, global_layer, local_layer, global_field, local_field):
+    def identifyControlPoints(self, global_layer, local_layer, global_field, local_field):
         control_points = []
         
         global_iter = global_layer.getFeatures()
@@ -113,71 +113,8 @@ class MainDialog(QDialog, FORM_CLASS):
                     control_points.append(gcp)
                     break
         
-        # insert points into table widget
-        self.tableWidget.clearContents()
-        self.tableWidget.setRowCount(len(control_points))
-        
-        # get decimal places from settings
-        decimal_places = str(self.settings.value("settings/decimal_places", 3))
+        self.tableWidget.insertControlPoints(control_points)
 
-        i = 0
-        for control_point in control_points:
-            text = str("%."+decimal_places+"f") % float(control_point.get_x_local())
-            item = QTableWidgetItem(text)  
-            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)    
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
-            self.tableWidget.setItem(i, 0, item)  
-
-            text = str("%."+decimal_places+"f") % float(control_point.get_y_local())
-            item = QTableWidgetItem(text)  
-            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)    
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
-            self.tableWidget.setItem(i, 1, item)  
-
-            text = str("%."+decimal_places+"f") % float(control_point.get_x_global())
-            item = QTableWidgetItem(text)  
-            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)    
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
-            self.tableWidget.setItem(i, 2, item)  
-            
-            text = str("%."+decimal_places+"f") % float(control_point.get_y_global())
-            item = QTableWidgetItem(text)  
-            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)    
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
-            self.tableWidget.setItem(i, 3, item)  
-            
-            item = QTableWidgetItem()  
-            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)    
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            self.tableWidget.setItem(i, 4, item)    
-            
-            item = QTableWidgetItem()  
-            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)    
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            self.tableWidget.setItem(i, 5, item)              
-            
-            text = str(control_point.get_ident())
-            item = QTableWidgetItem(text)  
-            item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)    
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
-            self.tableWidget.setItem(i, 6, item)  
-            
-            cb = QCheckBox()
-            cb.setCheckState(Qt.Checked) 
-            
-            layout1 = QHBoxLayout()
-            layout1.addWidget(cb)
-            layout1.setMargin(2)
-            layout1.insertSpacing(0, 10)
-            layout1.setAlignment(Qt.AlignCenter)
-            
-            frame1 = QFrame()
-            frame1.setLayout(layout1)       
-
-            self.tableWidget.setCellWidget(i, 7, frame1)                    
-            
-            i += 1
-        
     @pyqtSignature("on_comboTransformationType_currentIndexChanged(int)")      
     def on_comboTransformationType_currentIndexChanged(self, idx):    
         self.lineEditParameterA.clear()
@@ -297,6 +234,9 @@ class MainDialog(QDialog, FORM_CLASS):
             self.vl.setRendererV2(renderer)
             self.iface.mapCanvas().refresh()   
 
+    # methode in tablewidget die controlpoints returned.
+    # update methode in teablewidet
+
     def estimate_parameters(self):
         if self.tableWidget.rowCount() == 0:
             QMessageBox.information(None, "Helmert2D", self.tr(u"No control points found."))
@@ -304,6 +244,9 @@ class MainDialog(QDialog, FORM_CLASS):
             
         QApplication.setOverrideCursor(Qt.WaitCursor)            
         try:
+            
+            control_points = self.tableWidget.getControlPoints()
+            
             # Read control points from the table.
             control_points = []
             checked_points = 0
@@ -581,12 +524,14 @@ class MainDialog(QDialog, FORM_CLASS):
                 layer_tree_layer = root.findLayer(self.vl.id())
                 layer_tree_layer.setVisible(Qt.Checked)
                 
-        except Exception, e:
-            print str(e)
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            print str(exc_traceback)
             QApplication.restoreOverrideCursor()
         QApplication.restoreOverrideCursor()
         
     def initTransformationTab(self):
+        self.comboTransformationType.clear()
         self.comboTransformationType.addItem(self.tr("Helmert (2 - 4 parameter)"),  int(1))
         self.comboTransformationType.addItem(self.tr("Affine (6 parameter)"),  int(2))
 

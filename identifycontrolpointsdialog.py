@@ -20,7 +20,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class IdentifyControlPointsDialog(QDialog, FORM_CLASS):
     
-    controlPointsIdentified = pyqtSignal(QgsMapLayer, QgsMapLayer, str, str)
+    controlPointsLayerChosen = pyqtSignal(QgsMapLayer, QgsMapLayer, str, str)
     
     def __init__(self, parent=None):
         super(IdentifyControlPointsDialog, self).__init__(parent)
@@ -63,5 +63,5 @@ class IdentifyControlPointsDialog(QDialog, FORM_CLASS):
             if reply == QMessageBox.No:
                 return
 
-        self.controlPointsIdentified.emit(self.globalLayerCombo.currentLayer(), self.localLayerCombo.currentLayer(), self.globalFieldCombo.currentField(), self.localFieldCombo.currentField())
+        self.controlPointsLayerChosen.emit(self.globalLayerCombo.currentLayer(), self.localLayerCombo.currentLayer(), self.globalFieldCombo.currentField(), self.localFieldCombo.currentField())
         
