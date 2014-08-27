@@ -15,7 +15,7 @@ except AttributeError:
     def _translate(context, text, disambig):
         return QApplication.translate(context, text, disambig)
 
-class ControlPointsTable(QTableWidget):
+class H2dControlPointsTable(QTableWidget):
     def __init__(self, parent = None):
         super(QTableWidget, self).__init__(parent)
         

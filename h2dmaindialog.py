@@ -6,8 +6,8 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 
-from controlpointstable import ControlPointsTable
-from identifycontrolpointsdialog import IdentifyControlPointsDialog
+from h2dcontrolpointstable import H2dControlPointsTable
+from h2didentifycontrolpointsdialog import H2dIdentifyControlPointsDialog
 from helmert2d_dialog_settings import Helmert2DDialogSettings
 from helmert_transformation_builder import HelmertTransformationBuilder
 from helmert_transformation import HelmertTransformation 
@@ -29,9 +29,9 @@ except AttributeError:
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ui_maindialog.ui'))
 
-class MainDialog(QDialog, FORM_CLASS):
+class H2dMainDialog(QDialog, FORM_CLASS):
     def __init__(self, iface, parent=None):
-        super(MainDialog, self).__init__(parent)
+        super(H2dMainDialog, self).__init__(parent)
         self.setupUi(self)
         self.iface = iface
         
@@ -48,7 +48,7 @@ class MainDialog(QDialog, FORM_CLASS):
         self.toolButtonReduce.setIcon(QIcon(':/plugins/helmert2d/icons/residuals_reduce.svg'))
         self.toolBtnSettings.setIcon(QIcon(':/plugins/helmert2d/icons/mActionOptions.svg'))
         
-        self.tableWidget = ControlPointsTable(self.tabControlPoints)
+        self.tableWidget = H2dControlPointsTable(self.tabControlPoints)
         self.tableWidget.setObjectName("tableWidget")
         self.tableWidget.setColumnCount(0)
         self.tableWidget.setRowCount(0)
@@ -67,7 +67,7 @@ class MainDialog(QDialog, FORM_CLASS):
 
     @pyqtSignature("on_toolBtnIdentify_clicked()")    
     def on_toolBtnIdentify_clicked(self):
-        self.dlg = IdentifyControlPointsDialog()
+        self.dlg = H2dIdentifyControlPointsDialog()
         self.dlg.show()
         self.dlg.controlPointsLayerChosen.connect(self.identifyControlPoints)
 

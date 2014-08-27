@@ -18,12 +18,12 @@ except AttributeError:
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ui_identifycontrolpoints.ui'))
 
-class IdentifyControlPointsDialog(QDialog, FORM_CLASS):
+class H2dIdentifyControlPointsDialog(QDialog, FORM_CLASS):
     
     controlPointsLayerChosen = pyqtSignal(QgsMapLayer, QgsMapLayer, str, str)
     
     def __init__(self, parent=None):
-        super(IdentifyControlPointsDialog, self).__init__(parent)
+        super(H2dIdentifyControlPointsDialog, self).__init__(parent)
         self.setupUi(self)
         
         self.okButton = self.buttonBox.button(QDialogButtonBox.Ok)

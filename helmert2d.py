@@ -23,7 +23,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from maindialog import MainDialog
+from h2dmaindialog import H2dMainDialog
 
 import resources_rc
 import os.path
@@ -57,7 +57,7 @@ class Helmert2D:
                 QCoreApplication.installTranslator(self.translator)
 
         # Create the dialog (after translation) and keep reference
-        self.dlg = MainDialog(self.iface)
+        self.dlg = H2dMainDialog(self.iface)
 
         # Declare instance attributes
         self.actions = []
